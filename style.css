@@ -1,0 +1,105 @@
+body {
+  margin: 0;
+  background: black;
+  color: white;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  overflow: hidden;
+}
+
+#menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  text-align: center;
+}
+
+#menu h1 {
+  font-size: 60px;
+  color: #0f0;
+  margin-bottom: 40px;
+  text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
+  animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+  0% { text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0; }
+  100% { text-shadow: 0 0 20px #0f0, 0 0 40px #0f0, 0 0 60px #0f0; }
+}
+
+#menu button {
+  margin: 15px;
+  padding: 20px 40px;
+  font-size: 24px;
+  background: rgba(0,255,0,0.1);
+  color: #0f0;
+  border: 2px solid #0f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-shadow: 0 0 5px #0f0;
+}
+
+#menu button:hover {
+  background: rgba(0,255,0,0.3);
+  transform: scale(1.1);
+  box-shadow: 0 0 20px #0f0, 0 0 30px #0f0 inset;
+}
+
+canvas {
+  background: black;
+  display: block;
+  margin: 0 auto;
+  border: 3px solid #0f0;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Mobile controls */
+#mobile-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  pointer-events: none;
+}
+
+.joystick {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  pointer-events: all;
+}
+
+#stick {
+  width: 60px;
+  height: 60px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  transition: 0.1s;
+}
+
+#btnShoot, #btnDash {
+  pointer-events: all;
+  position: absolute;
+  bottom: 40px;
+  font-size: 28px;
+  padding: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.3);
+  color: white;
+}
+
+#btnShoot { right: 40px; }
+#btnDash { right: 130px; }

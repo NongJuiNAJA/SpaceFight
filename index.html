@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Fight</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="menu">
+    <h1>🚀 Space Fight</h1>
+    <button onclick="startGame('pc')">Play on PC</button>
+    <button onclick="startGame('mobile')">Play on Mobile</button>
+  </div>
+
+  <canvas id="game" width="1000" height="700" style="display:none"></canvas>
+
+  <!-- ปุ่มมือถือ -->
+  <div id="mobile-controls" style="display:none">
+    <div class="joystick">
+      <div id="stick"></div>
+    </div>
+    <button id="btnShoot">🔫</button>
+    <button id="btnDash">⚡</button>
+  </div>
+
+  <script src="main.js"></script>
+  <script>
+    function startGame(mode) {
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      if (mode === 'mobile') {
+        document.getElementById('mobile-controls').style.display = 'block';
+      }
+      startSpaceFight(mode);
+    }
+  </script>
+</body>
+</html>
