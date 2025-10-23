@@ -1,4 +1,4 @@
-function startSpaceFight() {
+function startSpaceFight(mode) {
   let canvas = document.getElementById("game");
   let ctx = canvas.getContext("2d");
 
@@ -272,34 +272,65 @@ function startSpaceFight() {
     requestAnimationFrame(loop);
   }
 
-  // Input (PC)
+  // Input PC
   document.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; if (e.key === " ") startDash(); });
   document.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; canShoot = true; });
   document.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
   document.addEventListener("mousedown", shootPlayer);
   window.addEventListener("resize", () => { WIDTH = window.innerWidth; HEIGHT = window.innerHeight; canvas.width = WIDTH; canvas.height = HEIGHT; });
 
-  // Mobile Buttons
+  // Mobile Buttons & Joystick
   const btnDash = document.getElementById("btnDash");
   const btnShoot = document.getElementById("btnShoot");
-  if (btnDash) {
-    btnDash.addEventListener("touchstart", e => { e.preventDefault(); startDash(); });
-    btnDash.addEventListener("mousedown", startDash);
-  }
-  if (btnShoot) {
-    btnShoot.addEventListener("touchstart", e => { e.preventDefault(); shootPlayer(); });
-    btnShoot.addEventListener("mousedown", shootPlayer);
-  }
+  const joystick = document.querySelector(".joystick");
+  const stick = document.getElementById("stick");
 
-  // Directional buttons (mobile joystick)
-  const dirs = ["up", "down", "left", "right"];
-  dirs.forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) {
-      btn.addEventListener("touchstart", e => { e.preventDefault(); keys[id === "up" ? "w" : id === "down" ? "s" : id === "left" ? "a" : "d"] = true; });
-      btn.addEventListener("touchend", e => { e.preventDefault(); keys[id === "up" ? "w" : id === "down" ? "s" : id === "left" ? "a" : "d"] = false; });
+  if (mode === "mobile") {
+    if (btnShoot) {
+      btnShoot.addEventListener("touchstart", e => { e.preventDefault(); shootPlayer(); });
+      btnShoot.addEventListener("mousedown", shootPlayer);
     }
-  });
+    if (btnDash) {
+      btnDash.addEventListener("touchstart", e => { e.preventDefault(); startDash(); });
+      btnDash.addEventListener("mousedown", startDash);
+    }
+
+    if (joystick && stick) {
+      let center = { x: 0, y: 0 };
+      let moving = false;
+
+      joystick.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        const rect = joystick.getBoundingClientRect();
+        const touch = e.touches[0];
+        center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        moving = true;
+      });
+
+      joystick.addEventListener("touchmove", (e) => {
+        if (!moving) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const dx = touch.clientX - center.x;
+        const dy = touch.clientY - center.y;
+
+        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 40);
+        const angle = Math.atan2(dy, dx);
+        stick.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+
+        keys["w"] = dy < -10;
+        keys["s"] = dy > 10;
+        keys["a"] = dx < -10;
+        keys["d"] = dx > 10;
+      });
+
+      joystick.addEventListener("touchend", () => {
+        moving = false;
+        stick.style.transform = "translate(0,0)";
+        keys["w"] = keys["a"] = keys["s"] = keys["d"] = false;
+      });
+    }
+  }
 
   initGame();
   loop();
