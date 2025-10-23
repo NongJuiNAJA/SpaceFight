@@ -33,7 +33,8 @@ function startSpaceFight() {
   }
 
   function updateBackground() {
-    for (let s of stars) s.alpha = Math.max(0.2, Math.min(1, s.alpha + s.speed * (Math.random() > 0.5 ? 1 : -1)));
+    for (let s of stars)
+      s.alpha = Math.max(0.2, Math.min(1, s.alpha + s.speed * (Math.random() > 0.5 ? 1 : -1)));
     for (let c of comets) {
       c.x += c.dx * 1.2; c.y += c.dy * 1.2;
       if (c.x < 0 || c.x > MAP_SIZE || c.y < 0 || c.y > MAP_SIZE) {
@@ -110,183 +111,195 @@ function startSpaceFight() {
     enemies = [];
     const num = 3 * wave;
     for (let i = 0; i < num; i++)
-      enemies.push({ x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, type: Math.ceil(Math.random() * 3), hp: 30 + wave*10, angle: 0, shootCooldown: Math.random() * 100 });
+      enemies.push({ x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, type: Math.ceil(Math.random() * 3), hp: 30 + wave * 10, angle: 0, shootCooldown: Math.random() * 100 });
     if (wave % 3 === 0)
-      enemies.push({ x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, type: "boss", hp: 200 + wave*50, angle: 0, shootCooldown: Math.random() * 100 });
+      enemies.push({ x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, type: "boss", hp: 200 + wave * 50, angle: 0, shootCooldown: Math.random() * 100 });
   }
 
-  function shootPlayer() { 
-    if (gameOver || !canShoot) return; 
-    player.bullets.push({ x: player.x, y: player.y, dx: Math.cos(player.angle)*10, dy: Math.sin(player.angle)*10, trail: [] }); 
-    canShoot = false; 
+  function shootPlayer() {
+    if (gameOver || !canShoot) return;
+    player.bullets.push({ x: player.x, y: player.y, dx: Math.cos(player.angle) * 10, dy: Math.sin(player.angle) * 10, trail: [] });
+    canShoot = false;
   }
 
-  function startDash() { 
-    if(dashFrames===0 && dashCooldown===0 && !gameOver) { dashFrames=DASH_DURATION; dashCooldown=DASH_COOLDOWN_MAX; } 
+  function startDash() {
+    if (dashFrames === 0 && dashCooldown === 0 && !gameOver) { dashFrames = DASH_DURATION; dashCooldown = DASH_COOLDOWN_MAX; }
   }
 
   function updatePlayer() {
-    let dx=0, dy=0;
-    if(keys["w"]||keys["arrowup"]) dy-=1;
-    if(keys["s"]||keys["arrowdown"]) dy+=1;
-    if(keys["a"]||keys["arrowleft"]) dx-=1;
-    if(keys["d"]||keys["arrowright"]) dx+=1;
+    let dx = 0, dy = 0;
+    if (keys["w"] || keys["arrowup"]) dy -= 1;
+    if (keys["s"] || keys["arrowdown"]) dy += 1;
+    if (keys["a"] || keys["arrowleft"]) dx -= 1;
+    if (keys["d"] || keys["arrowright"]) dx += 1;
 
-    if(dashFrames>0){
-      player.x += Math.cos(player.angle)*DASH_SPEED;
-      player.y += Math.sin(player.angle)*DASH_SPEED;
+    if (dashFrames > 0) {
+      player.x += Math.cos(player.angle) * DASH_SPEED;
+      player.y += Math.sin(player.angle) * DASH_SPEED;
       dashFrames--;
-    } else if(dx!==0||dy!==0){
+    } else if (dx !== 0 || dy !== 0) {
       const moveAngle = Math.atan2(dy, dx);
-      player.x += Math.cos(moveAngle)*player.speed;
-      player.y += Math.sin(moveAngle)*player.speed;
+      player.x += Math.cos(moveAngle) * player.speed;
+      player.y += Math.sin(moveAngle) * player.speed;
     }
 
     player.x = Math.max(0, Math.min(MAP_SIZE, player.x));
     player.y = Math.max(0, Math.min(MAP_SIZE, player.y));
 
-    const targetAngle = Math.atan2(mouse.y-HEIGHT/2, mouse.x-WIDTH/2);
-    player.angle += (targetAngle-player.angle)*0.2;
+    const targetAngle = Math.atan2(mouse.y - HEIGHT / 2, mouse.x - WIDTH / 2);
+    player.angle += (targetAngle - player.angle) * 0.2;
 
-    if(dashCooldown>0) dashCooldown--;
+    if (dashCooldown > 0) dashCooldown--;
   }
 
-  // Enemy update ปรับมุมหันถูกต้อง
   function updateEnemies() {
-    for(let e of enemies){
+    for (let e of enemies) {
       const dx = player.x - e.x;
       const dy = player.y - e.y;
       const targetAngle = Math.atan2(dy, dx);
 
-      // Smooth rotation แบบ shortest path
       let delta = targetAngle - e.angle;
-      delta = Math.atan2(Math.sin(delta), Math.cos(delta)); // normalize -π..π
-      e.angle += delta * 0.1; // speed ของ rotation
+      delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+      e.angle += delta * 0.1;
 
-      // Move towards player
-      if(Math.hypot(dx, dy) > 50){ 
-        e.x += Math.cos(e.angle) * 1.5; 
-        e.y += Math.sin(e.angle) * 1.5; 
+      if (Math.hypot(dx, dy) > 50) {
+        e.x += Math.cos(e.angle) * 1.5;
+        e.y += Math.sin(e.angle) * 1.5;
       }
 
-      // Shoot bullets
       e.shootCooldown--;
-      if(e.shootCooldown <= 0){
+      if (e.shootCooldown <= 0) {
         e.shootCooldown = 60 + Math.random() * 60;
         let speed = 5;
-        switch(e.type){
-          case 1: speed=5; bulletsEnemy.push({x:e.x,y:e.y,dx:Math.cos(e.angle)*speed,dy:Math.sin(e.angle)*speed,trail:[]}); break;
-          case 2: speed=7; bulletsEnemy.push({x:e.x,y:e.y,dx:Math.cos(e.angle)*speed,dy:Math.sin(e.angle)*speed,trail:[]}); break;
-          case 3: for(let a=-0.3;a<=0.3;a+=0.3) bulletsEnemy.push({x:e.x,y:e.y,dx:Math.cos(e.angle+a)*6,dy:Math.sin(e.angle+a)*6,trail:[]}); break;
-          case "boss": for(let i=0;i<5;i++){ const ang=e.angle + i*0.4 - 0.8; bulletsEnemy.push({x:e.x,y:e.y,dx:Math.cos(ang)*6,dy:Math.sin(ang)*6,trail:[]});} break;
+        switch (e.type) {
+          case 1: speed = 5; bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(e.angle) * speed, dy: Math.sin(e.angle) * speed, trail: [] }); break;
+          case 2: speed = 7; bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(e.angle) * speed, dy: Math.sin(e.angle) * speed, trail: [] }); break;
+          case 3: for (let a = -0.3; a <= 0.3; a += 0.3) bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(e.angle + a) * 6, dy: Math.sin(e.angle + a) * 6, trail: [] }); break;
+          case "boss": for (let i = 0; i < 5; i++) { const ang = e.angle + i * 0.4 - 0.8; bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(ang) * 6, dy: Math.sin(ang) * 6, trail: [] }); } break;
         }
       }
 
-      // Collision with player
-      if(Math.hypot(e.x-player.x, e.y-player.y)<32){ 
-        player.hp -= (e.type==="boss"?20:10); 
-        e.x -= Math.cos(e.angle)*10; 
-        e.y -= Math.sin(e.angle)*10; 
+      if (Math.hypot(e.x - player.x, e.y - player.y) < 32) {
+        player.hp -= (e.type === "boss" ? 20 : 10);
+        e.x -= Math.cos(e.angle) * 10;
+        e.y -= Math.sin(e.angle) * 10;
       }
     }
   }
 
-  function updateBullets(){
-    player.bullets.forEach((b,i)=>{
-      b.x+=b.dx; b.y+=b.dy; 
-      b.trail.push({x:b.x, y:b.y}); if(b.trail.length>5) b.trail.shift(); 
-      enemies.forEach(e=>{ if(Math.hypot(b.x-e.x, b.y-e.y)<24){ e.hp-=20; player.bullets.splice(i,1); } });
+  function updateBullets() {
+    player.bullets.forEach((b, i) => {
+      b.x += b.dx; b.y += b.dy;
+      b.trail.push({ x: b.x, y: b.y }); if (b.trail.length > 5) b.trail.shift();
+      enemies.forEach(e => { if (Math.hypot(b.x - e.x, b.y - e.y) < 24) { e.hp -= 20; player.bullets.splice(i, 1); } });
     });
-    enemies = enemies.filter(e=>{ if(e.hp<=0){ score+=(e.type==="boss"?50:10); return false;} return true; });
-    bulletsEnemy.forEach((b,i)=>{
-      b.x+=b.dx; b.y+=b.dy; b.trail.push({x:b.x, y:b.y}); if(b.trail.length>8) b.trail.shift();
-      if(Math.hypot(b.x-player.x, b.y-player.y)<24){ player.hp-=10; bulletsEnemy.splice(i,1); }
+    enemies = enemies.filter(e => { if (e.hp <= 0) { score += (e.type === "boss" ? 50 : 10); return false; } return true; });
+    bulletsEnemy.forEach((b, i) => {
+      b.x += b.dx; b.y += b.dy; b.trail.push({ x: b.x, y: b.y }); if (b.trail.length > 8) b.trail.shift();
+      if (Math.hypot(b.x - player.x, b.y - player.y) < 24) { player.hp -= 10; bulletsEnemy.splice(i, 1); }
     });
   }
 
-  function drawRotatedImage(img,x,y,angle,w,h){ 
-    ctx.save(); ctx.translate(x,y); ctx.rotate(angle); ctx.drawImage(img,-w/2,-h/2,w,h); ctx.restore(); 
+  function drawRotatedImage(img, x, y, angle, w, h) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.drawImage(img, -w / 2, -h / 2, w, h); ctx.restore();
   }
 
-  function drawBullets(){ 
-    player.bullets.forEach(b=>{
-      for(let i=0;i<b.trail.length;i++){ 
-        ctx.globalAlpha=i/5; ctx.fillStyle="yellow"; ctx.beginPath(); 
-        ctx.arc(b.trail[i].x-camera.x,b.trail[i].y-camera.y,5*(i/5+0.2),0,Math.PI*2); ctx.fill(); 
-      } 
-      ctx.globalAlpha=1; ctx.fillStyle="yellow"; ctx.beginPath(); 
-      ctx.arc(b.x-camera.x,b.y-camera.y,5,0,Math.PI*2); ctx.fill(); 
+  function drawBullets() {
+    player.bullets.forEach(b => {
+      for (let i = 0; i < b.trail.length; i++) {
+        ctx.globalAlpha = i / 5; ctx.fillStyle = "yellow"; ctx.beginPath();
+        ctx.arc(b.trail[i].x - camera.x, b.trail[i].y - camera.y, 5 * (i / 5 + 0.2), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.fillStyle = "yellow"; ctx.beginPath();
+      ctx.arc(b.x - camera.x, b.y - camera.y, 5, 0, Math.PI * 2); ctx.fill();
     });
-    bulletsEnemy.forEach(b=>{
-      for(let i=0;i<b.trail.length;i++){ 
-        ctx.globalAlpha=i/8; ctx.fillStyle="orange"; ctx.beginPath(); 
-        ctx.arc(b.trail[i].x-camera.x,b.trail[i].y-camera.y,5*(i/8+0.2),0,Math.PI*2); ctx.fill(); 
-      } 
-      ctx.globalAlpha=1; ctx.fillStyle="orange"; ctx.beginPath(); 
-      ctx.arc(b.x-camera.x,b.y-camera.y,5,0,Math.PI*2); ctx.fill(); 
-    }); 
+    bulletsEnemy.forEach(b => {
+      for (let i = 0; i < b.trail.length; i++) {
+        ctx.globalAlpha = i / 8; ctx.fillStyle = "orange"; ctx.beginPath();
+        ctx.arc(b.trail[i].x - camera.x, b.trail[i].y - camera.y, 5 * (i / 8 + 0.2), 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1; ctx.fillStyle = "orange"; ctx.beginPath();
+      ctx.arc(b.x - camera.x, b.y - camera.y, 5, 0, Math.PI * 2); ctx.fill();
+    });
   }
 
-  function drawUI(){
-    ctx.fillStyle="red"; ctx.fillRect(20,20,200,20);
-    ctx.fillStyle="green"; ctx.fillRect(20,20,200*(player.hp/player.maxHp),20);
-    ctx.strokeStyle="white"; ctx.strokeRect(20,20,200,20);
-    ctx.fillStyle="white"; ctx.font="20px Arial";
-    ctx.fillText("Score: "+score, WIDTH-120, 40);
-    ctx.fillText("Wave: "+wave, WIDTH-120, 70);
-    enemies.forEach(e=>{ 
-      ctx.fillStyle="red"; ctx.fillRect(e.x-camera.x-24,e.y-camera.y-40,48,6); 
-      ctx.fillStyle="green"; ctx.fillRect(e.x-camera.x-24,e.y-camera.y-40,48*(e.hp/(e.type==="boss"?200+wave*50:30+wave*10)),6); 
-      ctx.strokeStyle="white"; ctx.strokeRect(e.x-camera.x-24,e.y-camera.y-40,48,6); 
+  function drawUI() {
+    ctx.fillStyle = "red"; ctx.fillRect(20, 20, 200, 20);
+    ctx.fillStyle = "green"; ctx.fillRect(20, 20, 200 * (player.hp / player.maxHp), 20);
+    ctx.strokeStyle = "white"; ctx.strokeRect(20, 20, 200, 20);
+    ctx.fillStyle = "white"; ctx.font = "20px Arial";
+    ctx.fillText("Score: " + score, WIDTH - 120, 40);
+    ctx.fillText("Wave: " + wave, WIDTH - 120, 70);
+    enemies.forEach(e => {
+      ctx.fillStyle = "red"; ctx.fillRect(e.x - camera.x - 24, e.y - camera.y - 40, 48, 6);
+      ctx.fillStyle = "green"; ctx.fillRect(e.x - camera.x - 24, e.y - camera.y - 40, 48 * (e.hp / (e.type === "boss" ? 200 + wave * 50 : 30 + wave * 10)), 6);
+      ctx.strokeStyle = "white"; ctx.strokeRect(e.x - camera.x - 24, e.y - camera.y - 40, 48, 6);
     });
-    if(gameOver){ 
-      const survivedTime=Math.floor((stopTime-startTime)/1000); 
-      ctx.fillStyle="white"; ctx.font="40px Arial"; 
-      ctx.fillText("GAME OVER", WIDTH/2-150, HEIGHT/2-40); 
-      ctx.fillText("Score: "+score, WIDTH/2-100, HEIGHT/2); 
-      ctx.fillText("Wave: "+wave, WIDTH/2-80, HEIGHT/2+40); 
-      ctx.fillText("Time survived: "+survivedTime+"s", WIDTH/2-140, HEIGHT/2+80); 
-      ctx.fillText("Click to Restart", WIDTH/2-140, HEIGHT/2+140); 
+    if (gameOver) {
+      const survivedTime = Math.floor((stopTime - startTime) / 1000);
+      ctx.fillStyle = "white"; ctx.font = "40px Arial";
+      ctx.fillText("GAME OVER", WIDTH / 2 - 150, HEIGHT / 2 - 40);
+      ctx.fillText("Score: " + score, WIDTH / 2 - 100, HEIGHT / 2);
+      ctx.fillText("Wave: " + wave, WIDTH / 2 - 80, HEIGHT / 2 + 40);
+      ctx.fillText("Time survived: " + survivedTime + "s", WIDTH / 2 - 140, HEIGHT / 2 + 80);
+      ctx.fillText("Click to Restart", WIDTH / 2 - 140, HEIGHT / 2 + 140);
     }
   }
 
-  function drawDashUI(){
-    const size=64; const x=WIDTH/2-size/2; const y=HEIGHT-100;
-    ctx.globalAlpha=0.6; ctx.drawImage(dashIcon,x,y,size,size); ctx.globalAlpha=1;
-    if(dashCooldown>0){ ctx.fillStyle="rgba(0,0,0,0.6)"; const height=(dashCooldown/DASH_COOLDOWN_MAX)*size; ctx.fillRect(x,y+size-height,size,height); }
+  function drawDashUI() {
+    const size = 64; const x = WIDTH / 2 - size / 2; const y = HEIGHT - 100;
+    ctx.globalAlpha = 0.6; ctx.drawImage(dashIcon, x, y, size, size); ctx.globalAlpha = 1;
+    if (dashCooldown > 0) { ctx.fillStyle = "rgba(0,0,0,0.6)"; const height = (dashCooldown / DASH_COOLDOWN_MAX) * size; ctx.fillRect(x, y + size - height, size, height); }
   }
 
-  function loop(){
-    WIDTH=canvas.width; HEIGHT=canvas.height;
-    if(!gameOver){
+  function loop() {
+    WIDTH = canvas.width; HEIGHT = canvas.height;
+    if (!gameOver) {
       updateBackground(); updatePlayer(); updateEnemies(); updateBullets();
-      if(enemies.length===0){ wave++; spawnEnemies(); }
-      camera.x=player.x-WIDTH/2; camera.y=player.y-HEIGHT/2;
-      drawBackground(); 
-      drawRotatedImage(images.player,player.x-camera.x,player.y-camera.y,player.angle,player.w,player.h);
-
-      // วาด enemy พร้อม offset ให้หันถูกต้อง (ชี้ sprite ขึ้น)
-      const ENEMY_OFFSET = Math.PI/2;
-      enemies.forEach(e=>{ 
-        const img=e.type==="boss"?images.boss:images["enemy"+e.type]; 
-        drawRotatedImage(img,e.x-camera.x,e.y-camera.y,e.angle+ENEMY_OFFSET,48,48); 
+      if (enemies.length === 0) { wave++; spawnEnemies(); }
+      camera.x = player.x - WIDTH / 2; camera.y = player.y - HEIGHT / 2;
+      drawBackground();
+      drawRotatedImage(images.player, player.x - camera.x, player.y - camera.y, player.angle, player.w, player.h);
+      const ENEMY_OFFSET = Math.PI / 2;
+      enemies.forEach(e => {
+        const img = e.type === "boss" ? images.boss : images["enemy" + e.type];
+        drawRotatedImage(img, e.x - camera.x, e.y - camera.y, e.angle + ENEMY_OFFSET, 48, 48);
       });
 
       drawBullets(); drawUI(); drawDashUI();
-      if(player.hp<=0){ gameOver=true; stopTime=Date.now(); canvas.addEventListener("click",()=>{initGame();},{once:true}); }
+      if (player.hp <= 0) { gameOver = true; stopTime = Date.now(); canvas.addEventListener("click", () => { initGame(); }, { once: true }); }
     } else { drawUI(); }
     requestAnimationFrame(loop);
   }
 
-  document.addEventListener("keydown",e=>{ keys[e.key.toLowerCase()]=true; if(e.key===" ") startDash(); });
-  document.addEventListener("keyup",e=>{ keys[e.key.toLowerCase()]=false; canShoot=true; });
-  document.addEventListener("mousemove",e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
+  // Input (PC)
+  document.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; if (e.key === " ") startDash(); });
+  document.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; canShoot = true; });
+  document.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
   document.addEventListener("mousedown", shootPlayer);
-  window.addEventListener("resize",()=>{ WIDTH=window.innerWidth; HEIGHT=window.innerHeight; canvas.width=WIDTH; canvas.height=HEIGHT; });
+  window.addEventListener("resize", () => { WIDTH = window.innerWidth; HEIGHT = window.innerHeight; canvas.width = WIDTH; canvas.height = HEIGHT; });
 
-  // Mobile button
+  // Mobile Buttons
   const btnDash = document.getElementById("btnDash");
-  if(btnDash) btnDash.addEventListener("mousedown", startDash);
+  const btnShoot = document.getElementById("btnShoot");
+  if (btnDash) {
+    btnDash.addEventListener("touchstart", e => { e.preventDefault(); startDash(); });
+    btnDash.addEventListener("mousedown", startDash);
+  }
+  if (btnShoot) {
+    btnShoot.addEventListener("touchstart", e => { e.preventDefault(); shootPlayer(); });
+    btnShoot.addEventListener("mousedown", shootPlayer);
+  }
+
+  // Directional buttons (mobile joystick)
+  const dirs = ["up", "down", "left", "right"];
+  dirs.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.addEventListener("touchstart", e => { e.preventDefault(); keys[id === "up" ? "w" : id === "down" ? "s" : id === "left" ? "a" : "d"] = true; });
+      btn.addEventListener("touchend", e => { e.preventDefault(); keys[id === "up" ? "w" : id === "down" ? "s" : id === "left" ? "a" : "d"] = false; });
+    }
+  });
 
   initGame();
   loop();
