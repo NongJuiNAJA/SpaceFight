@@ -3,17 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Space Fight</title>
+  <title>🚀 Space Fight</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: black; color: white; text-align: center; }
+    #menu, #nameMenu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    button { font-size: 18px; padding: 10px 20px; margin: 10px; cursor: pointer; }
+    #mobile-controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; }
+    .joystick { width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; position: relative; }
+    #stick { width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; position: absolute; top: 25px; left: 25px; }
+    #game { display: none; background: black; }
+    input { font-size: 18px; padding: 5px; }
+  </style>
 </head>
 <body>
-  <div id="menu">
+
+  <!-- หน้ากรอกชื่อ -->
+  <div id="nameMenu">
+    <h1>🚀 Space Fight</h1>
+    <p>Enter your name:</p>
+    <input type="text" id="playerName" placeholder="Your Name" />
+    <br>
+    <button onclick="showModeMenu()">Continue</button>
+  </div>
+
+  <!-- เลือกโหมด PC / Mobile -->
+  <div id="menu" style="display:none">
     <h1>🚀 Space Fight</h1>
     <button onclick="startGame('pc')">Play on PC</button>
     <button onclick="startGame('mobile')">Play on Mobile</button>
   </div>
 
-  <canvas id="game" width="1000" height="700" style="display:none"></canvas>
+  <!-- Canvas เกม -->
+  <canvas id="game" width="1000" height="700"></canvas>
 
   <!-- ปุ่มมือถือ -->
   <div id="mobile-controls" style="display:none">
@@ -26,14 +48,28 @@
 
   <script src="main.js"></script>
   <script>
+    let playerName = "";
+
+    function showModeMenu() {
+      const input = document.getElementById('playerName').value.trim();
+      if(input === "") {
+        alert("Please enter your name");
+        return;
+      }
+      playerName = input;
+      document.getElementById('nameMenu').style.display = 'none';
+      document.getElementById('menu').style.display = 'block';
+    }
+
     function startGame(mode) {
       document.getElementById('menu').style.display = 'none';
       document.getElementById('game').style.display = 'block';
       if (mode === 'mobile') {
-        document.getElementById('mobile-controls').style.display = 'block';
+        document.getElementById('mobile-controls').style.display = 'flex';
       }
-      startSpaceFight(mode);
+      startSpaceFight(mode, playerName);
     }
   </script>
+
 </body>
 </html>
