@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🚀 Space Fight</title>
   <link rel="stylesheet" href="style.css" />
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -14,68 +17,75 @@
     <p>Enter your name:</p>
     <input type="text" id="playerName" placeholder="Your Name" />
     <br>
-    <button onclick="showModeMenu()">Continue</button>
+    <button id="btnContinue">Continue</button>
   </div>
 
   <!-- เลือกโหมด PC / Mobile -->
   <div id="menu" style="display:none">
     <h1>🚀 Space Fight</h1>
-    <button onclick="startGame('pc')">Play on PC</button>
-    <button onclick="startGame('mobile')">Play on Mobile</button>
+    <button id="btnPC">Play on PC</button>
+    <button id="btnMobile">Play on Mobile</button>
   </div>
 
   <!-- Canvas เกม -->
-  <canvas id="game" width="1000" height="700"></canvas>
+  <canvas id="game" width="1000" height="700" style="display:none"></canvas>
 
   <!-- ปุ่มมือถือ -->
-  <div id="mobile-controls" style="display:none">
-    <div class="joystick">
-      <div id="stick"></div>
+  <div id="mobile-controls" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); gap:10px;">
+    <div class="joystick" style="display:inline-block; width:80px; height:80px; background:rgba(255,255,255,0.1); border-radius:50%; position:relative;">
+      <div id="stick" style="width:40px; height:40px; background:white; border-radius:50%; position:absolute; left:20px; top:20px;"></div>
     </div>
-    <button id="btnShoot">🔫</button>
-    <button id="btnDash">⚡</button>
+    <button id="btnShoot" style="padding:20px; font-size:24px;">🔫</button>
+    <button id="btnDash" style="padding:20px; font-size:24px;">⚡</button>
   </div>
 
-  <!-- Leaderboard fixed -->
-  <div id="leaderboard">
+  <!-- Leaderboard -->
+  <div id="leaderboard" style="position:fixed; top:10px; right:10px; background:rgba(0,0,0,0.6); padding:10px; border-radius:8px;">
     <h2>Leaderboard</h2>
     <ol id="leaderboardList"></ol>
   </div>
 
+  <!-- main.js ต้องมี Firebase initialize + ฟังก์ชันเกม -->
   <script src="main.js"></script>
   <script>
     let playerName = "";
 
-    function showModeMenu() {
-      const input = document.getElementById('playerName').value.trim();
-      if(input === "") {
-        alert("Please enter your name");
-        return;
-      }
+    // ===== Button Events =====
+    document.getElementById("btnContinue").addEventListener("click", () => {
+      const input = document.getElementById("playerName").value.trim();
+      if(!input) { alert("Please enter your name"); return; }
       playerName = input;
-      document.getElementById('nameMenu').style.display = 'none';
-      document.getElementById('menu').style.display = 'block';
-      updateLeaderboard();
-    }
+      document.getElementById("nameMenu").style.display = "none";
+      document.getElementById("menu").style.display = "block";
+    });
+
+    document.getElementById("btnPC").addEventListener("click", () => startGame("pc"));
+    document.getElementById("btnMobile").addEventListener("click", () => startGame("mobile"));
 
     function startGame(mode) {
-      document.getElementById('menu').style.display = 'none';
-      document.getElementById('game').style.display = 'block';
-      if (mode === 'mobile') {
-        document.getElementById('mobile-controls').style.display = 'flex';
-      }
+      document.getElementById("menu").style.display = "none";
+      document.getElementById("game").style.display = "block";
+      if(mode === "mobile") document.getElementById("mobile-controls").style.display = "flex";
+
+      // เรียกเกมจาก main.js
       startSpaceFight(mode, playerName);
-      updateLeaderboard();
     }
 
-    function updateLeaderboard() {
+    // ================= Leaderboard Update =================
+    function updateLeaderboardUI(){
       const list = document.getElementById("leaderboardList");
-      const data = JSON.parse(localStorage.getItem("leaderboard") || "[]");
-      list.innerHTML = data.map(entry => `<li>${entry.name}: Wave ${entry.wave}</li>`).join("");
+      const dbRef = firebase.database().ref("leaderboard");
+      dbRef.orderByChild("wave").limitToLast(10).on("value", snapshot=>{
+        const data = snapshot.val();
+        if(!data){ list.innerHTML="<li>No scores yet</li>"; return; }
+        const sorted = Object.values(data)
+          .sort((a,b)=>b.wave - a.wave)
+          .slice(0,10);
+        list.innerHTML = sorted.map((entry,index)=>`<li>${index+1}. ${entry.name}: Wave ${entry.wave}</li>`).join("");
+      });
     }
 
-    // เรียก updateLeaderboard ตอนโหลดหน้า
-    updateLeaderboard();
+    updateLeaderboardUI(); // แสดงตอนโหลดหน้า
   </script>
 
 </body>
