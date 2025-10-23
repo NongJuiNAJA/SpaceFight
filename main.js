@@ -1,17 +1,3 @@
-// ===== Firebase Config =====
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://spacefight-27fe2-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// ===== Game Start =====
 function startSpaceFight(mode, playerName) {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -132,6 +118,7 @@ function startSpaceFight(mode, playerName) {
     dashCooldown = 0;
     initBackground();
     spawnEnemies();
+    updateLeaderboardUI();
   }
 
   function spawnEnemies() {
@@ -160,28 +147,18 @@ function startSpaceFight(mode, playerName) {
     }
   }
 
-  // ===== Leaderboard Firebase =====
-  function saveScoreFirebase(name, wave) {
-    if (!name || wave <= 0) return;
-    db.ref('leaderboard').push({ name, wave })
-      .then(() => console.log("Saved score to Firebase"))
-      .catch(err => console.error("Firebase save error:", err));
+  // ===== Leaderboard =====
+  function saveScore(name, wave) {
+    const leaderboard = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+    leaderboard.push({ name, wave });
+    leaderboard.sort((a, b) => b.wave - a.wave);
+    localStorage.setItem("leaderboard", JSON.stringify(leaderboard.slice(0, 10)));
   }
 
-  function drawLeaderboardFirebase() {
-    db.ref('leaderboard').orderByChild('wave').limitToLast(10).once('value', snapshot => {
-      const leaderboard = [];
-      snapshot.forEach(child => {
-        leaderboard.push(child.val());
-      });
-      leaderboard.sort((a,b)=>b.wave-a.wave);
-      ctx.font = "24px Arial";
-      ctx.fillStyle = "yellow";
-      ctx.fillText("Leaderboard (Top 10 Wave):", WIDTH / 2 - 150, HEIGHT / 2 + 160);
-      leaderboard.forEach((entry, i) => {
-        ctx.fillText(`${i + 1}. ${entry.name}: Wave ${entry.wave}`, WIDTH / 2 - 120, HEIGHT / 2 + 190 + i*30);
-      });
-    });
+  function updateLeaderboardUI() {
+    const list = document.getElementById("leaderboardList");
+    const leaderboard = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+    list.innerHTML = leaderboard.map(entry => `<li>${entry.name}: Wave ${entry.wave}</li>`).join("");
   }
 
   // ===== Update / Draw / Loop =====
@@ -319,9 +296,10 @@ function startSpaceFight(mode, playerName) {
       ctx.fillText("Time survived: " + survivedTime + "s", WIDTH / 2 - 140, HEIGHT / 2 + 80);
       ctx.fillText("Click to Restart", WIDTH / 2 - 140, HEIGHT / 2 + 140);
 
-      drawLeaderboardFirebase();
-      saveScoreFirebase(playerName, wave);
+      saveScore(playerName, wave);
+      updateLeaderboardUI();
 
+      // Restart
       canvas.addEventListener("click", () => { initGame(); }, { once: true });
     }
   }
@@ -336,7 +314,6 @@ function startSpaceFight(mode, playerName) {
     }
   }
 
-  // ===== Loop =====
   function loop() {
     WIDTH = canvas.width; HEIGHT = canvas.height;
     if (!gameOver) {
@@ -369,6 +346,7 @@ function startSpaceFight(mode, playerName) {
     document.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
     document.addEventListener("mousedown", shootPlayer);
   } else {
+    // Mobile buttons
     document.getElementById("btnShoot").addEventListener("touchstart", shootPlayer);
     document.getElementById("btnDash").addEventListener("touchstart", startDash);
     const stick = document.getElementById("stick");
