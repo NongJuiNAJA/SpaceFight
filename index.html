@@ -5,16 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🚀 Space Fight</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: black; color: white; text-align: center; }
-    #menu, #nameMenu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-    button { font-size: 18px; padding: 10px 20px; margin: 10px; cursor: pointer; }
-    #mobile-controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; }
-    .joystick { width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; position: relative; }
-    #stick { width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; position: absolute; top: 25px; left: 25px; }
-    #game { display: none; background: black; }
-    input { font-size: 18px; padding: 5px; }
-  </style>
 </head>
 <body>
 
@@ -46,6 +36,12 @@
     <button id="btnDash">⚡</button>
   </div>
 
+  <!-- Leaderboard fixed -->
+  <div id="leaderboard">
+    <h2>Leaderboard</h2>
+    <ol id="leaderboardList"></ol>
+  </div>
+
   <script src="main.js"></script>
   <script>
     let playerName = "";
@@ -59,6 +55,7 @@
       playerName = input;
       document.getElementById('nameMenu').style.display = 'none';
       document.getElementById('menu').style.display = 'block';
+      updateLeaderboard();
     }
 
     function startGame(mode) {
@@ -68,7 +65,17 @@
         document.getElementById('mobile-controls').style.display = 'flex';
       }
       startSpaceFight(mode, playerName);
+      updateLeaderboard();
     }
+
+    function updateLeaderboard() {
+      const list = document.getElementById("leaderboardList");
+      const data = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+      list.innerHTML = data.map(entry => `<li>${entry.name}: Wave ${entry.wave}</li>`).join("");
+    }
+
+    // เรียก updateLeaderboard ตอนโหลดหน้า
+    updateLeaderboard();
   </script>
 
 </body>
