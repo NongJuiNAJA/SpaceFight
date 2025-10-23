@@ -1,3 +1,4 @@
+/* Body & Menu */
 body {
   margin: 0;
   background: black;
@@ -7,7 +8,7 @@ body {
   overflow: hidden;
 }
 
-#menu {
+#menu, #nameMenu {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -16,7 +17,7 @@ body {
   text-align: center;
 }
 
-#menu h1 {
+#menu h1, #nameMenu h1 {
   font-size: 60px;
   color: #0f0;
   margin-bottom: 40px;
@@ -29,7 +30,7 @@ body {
   100% { text-shadow: 0 0 20px #0f0, 0 0 40px #0f0, 0 0 60px #0f0; }
 }
 
-#menu button {
+#menu button, #nameMenu button {
   margin: 15px;
   padding: 20px 40px;
   font-size: 24px;
@@ -42,12 +43,23 @@ body {
   text-shadow: 0 0 5px #0f0;
 }
 
-#menu button:hover {
+#menu button:hover, #nameMenu button:hover {
   background: rgba(0,255,0,0.3);
   transform: scale(1.1);
   box-shadow: 0 0 20px #0f0, 0 0 30px #0f0 inset;
 }
 
+#nameMenu input {
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid #0f0;
+  background: black;
+  color: #0f0;
+  text-align: center;
+}
+
+/* Canvas */
 canvas {
   background: black;
   display: block;
@@ -103,3 +115,45 @@ canvas {
 
 #btnShoot { right: 40px; }
 #btnDash { right: 130px; }
+
+/* Leaderboard */
+#leaderboard {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 220px;
+  background: rgba(0,0,0,0.8);
+  border: 2px solid #0f0;
+  border-radius: 12px;
+  padding: 10px;
+  font-family: 'Arial', sans-serif;
+  color: #0f0;
+  z-index: 1000; /* อยู่เหนือ canvas และ menu */
+  pointer-events: none; /* ไม่ขัดกับ click/drag */
+}
+
+#leaderboard h2 {
+  text-align: center;
+  font-size: 20px;
+  margin: 0 0 10px 0;
+  text-shadow: 0 0 5px #0f0;
+}
+
+#leaderboard ol {
+  list-style: decimal;
+  padding-left: 20px;
+  margin: 0;
+}
+
+#leaderboard li {
+  border-bottom: 1px solid #0f0;
+  margin-bottom: 5px;
+  padding-bottom: 3px;
+  font-size: 16px;
+}
+
+#leaderboard li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
