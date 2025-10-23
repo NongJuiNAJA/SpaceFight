@@ -1,4 +1,18 @@
-function startSpaceFight(mode) {
+// ===== Firebase Config =====
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://spacefight-27fe2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ===== Game Start =====
+function startSpaceFight(mode, playerName) {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
 
@@ -146,12 +160,35 @@ function startSpaceFight(mode) {
     }
   }
 
-  // ===== Update =====
+  // ===== Leaderboard Firebase =====
+  function saveScoreFirebase(name, wave) {
+    if (!name || wave <= 0) return;
+    db.ref('leaderboard').push({ name, wave })
+      .then(() => console.log("Saved score to Firebase"))
+      .catch(err => console.error("Firebase save error:", err));
+  }
+
+  function drawLeaderboardFirebase() {
+    db.ref('leaderboard').orderByChild('wave').limitToLast(10).once('value', snapshot => {
+      const leaderboard = [];
+      snapshot.forEach(child => {
+        leaderboard.push(child.val());
+      });
+      leaderboard.sort((a,b)=>b.wave-a.wave);
+      ctx.font = "24px Arial";
+      ctx.fillStyle = "yellow";
+      ctx.fillText("Leaderboard (Top 10 Wave):", WIDTH / 2 - 150, HEIGHT / 2 + 160);
+      leaderboard.forEach((entry, i) => {
+        ctx.fillText(`${i + 1}. ${entry.name}: Wave ${entry.wave}`, WIDTH / 2 - 120, HEIGHT / 2 + 190 + i*30);
+      });
+    });
+  }
+
+  // ===== Update / Draw / Loop =====
   function updatePlayer() {
     let dx = 0, dy = 0;
-    if (isMobile) {
-      dx = joystick.dx; dy = joystick.dy;
-    } else {
+    if (isMobile) { dx = joystick.dx; dy = joystick.dy; }
+    else {
       if (keys["w"] || keys["arrowup"]) dy -= 1;
       if (keys["s"] || keys["arrowdown"]) dy += 1;
       if (keys["a"] || keys["arrowleft"]) dx -= 1;
@@ -189,20 +226,17 @@ function startSpaceFight(mode) {
       delta = Math.atan2(Math.sin(delta), Math.cos(delta));
       e.angle += delta * 0.1;
 
-      if (Math.hypot(dx, dy) > 50) {
-        e.x += Math.cos(e.angle) * 1.5;
-        e.y += Math.sin(e.angle) * 1.5;
-      }
+      if (Math.hypot(dx, dy) > 50) { e.x += Math.cos(e.angle) * 1.5; e.y += Math.sin(e.angle) * 1.5; }
 
       e.shootCooldown--;
       if (e.shootCooldown <= 0) {
         e.shootCooldown = 60 + Math.random() * 60;
-        let speed = 5;
         switch (e.type) {
           case 1: bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(e.angle) * 5, dy: Math.sin(e.angle) * 5, trail: [] }); break;
           case 2: bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(e.angle) * 7, dy: Math.sin(e.angle) * 7, trail: [] }); break;
           case 3:
-            for (let a = -0.3; a <= 0.3; a += 0.3) bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(e.angle + a) * 6, dy: Math.sin(e.angle + a) * 6, trail: [] });
+            for (let a = -0.3; a <= 0.3; a += 0.3)
+              bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(e.angle + a) * 6, dy: Math.sin(e.angle + a) * 6, trail: [] });
             break;
           case "boss":
             for (let i = 0; i < 5; i++) {
@@ -244,7 +278,6 @@ function startSpaceFight(mode) {
     });
   }
 
-  // ===== Draw =====
   function drawRotatedImage(img, x, y, angle, w, h) {
     ctx.save();
     ctx.translate(x, y);
@@ -276,6 +309,7 @@ function startSpaceFight(mode) {
       ctx.fillStyle = "green"; ctx.fillRect(e.x - camera.x - 24, e.y - camera.y - 40, 48 * (e.hp / (e.type === "boss" ? 200 + wave * 50 : 30 + wave * 10)), 6);
       ctx.strokeStyle = "white"; ctx.strokeRect(e.x - camera.x - 24, e.y - camera.y - 40, 48, 6);
     });
+
     if (gameOver) {
       const survivedTime = Math.floor((stopTime - startTime) / 1000);
       ctx.fillStyle = "white"; ctx.font = "40px Arial";
@@ -284,6 +318,11 @@ function startSpaceFight(mode) {
       ctx.fillText("Wave: " + wave, WIDTH / 2 - 80, HEIGHT / 2 + 40);
       ctx.fillText("Time survived: " + survivedTime + "s", WIDTH / 2 - 140, HEIGHT / 2 + 80);
       ctx.fillText("Click to Restart", WIDTH / 2 - 140, HEIGHT / 2 + 140);
+
+      drawLeaderboardFirebase();
+      saveScoreFirebase(playerName, wave);
+
+      canvas.addEventListener("click", () => { initGame(); }, { once: true });
     }
   }
 
@@ -317,7 +356,7 @@ function startSpaceFight(mode) {
       drawBullets();
       drawUI();
       drawDashUI();
-      if (player.hp <= 0) { gameOver = true; stopTime = Date.now(); canvas.addEventListener("click", () => { initGame(); }, { once: true }); }
+      if (player.hp <= 0 && !gameOver) { gameOver = true; stopTime = Date.now(); }
     } else drawUI();
 
     requestAnimationFrame(loop);
@@ -330,7 +369,6 @@ function startSpaceFight(mode) {
     document.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
     document.addEventListener("mousedown", shootPlayer);
   } else {
-    // Mobile buttons
     document.getElementById("btnShoot").addEventListener("touchstart", shootPlayer);
     document.getElementById("btnDash").addEventListener("touchstart", startDash);
     const stick = document.getElementById("stick");
