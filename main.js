@@ -12,6 +12,7 @@ function startSpaceFight(mode) {
   const COMET_COUNT = 6;
   let stars = [], comets = [];
 
+  // --- Background ---
   function initBackground() {
     stars = [];
     for (let i = 0; i < STAR_COUNT; i++) stars.push({
@@ -76,7 +77,7 @@ function startSpaceFight(mode) {
     ctx.globalAlpha = 1;
   }
 
-  // Assets
+  // --- Assets ---
   const assets = {
     player: "assets/player.png",
     enemy1: "assets/enemy_1.png",
@@ -88,24 +89,11 @@ function startSpaceFight(mode) {
   let images = {};
   for (let k in assets) { const img = new Image(); img.src = assets[k]; images[k] = img; }
 
-  // Game State
+  // --- Game State ---
   let player, enemies, bulletsEnemy, wave, score, camera, gameOver, startTime, stopTime;
-  let mouse = { x: WIDTH / 2, y: HEIGHT / 2 };
-  let canShoot = true;
   let keys = {};
-
-  // Dash
   const DASH_SPEED = 15, DASH_DURATION = 10, DASH_COOLDOWN_MAX = 120;
   let dashFrames = 0, dashCooldown = 0;
-  const dashIcon = images.dash;
-
-  function initGame() {
-    player = { x: MAP_SIZE / 2, y: MAP_SIZE / 2, w: 48, h: 48, speed: 4, hp: 100, maxHp: 100, bullets: [], angle: 0 };
-    enemies = []; bulletsEnemy = []; wave = 1; score = 0;
-    camera = { x: 0, y: 0 }; gameOver = false; startTime = Date.now(); stopTime = 0; canShoot = true;
-    dashFrames = 0; dashCooldown = 0;
-    initBackground(); spawnEnemies();
-  }
 
   function spawnEnemies() {
     enemies = [];
@@ -116,10 +104,18 @@ function startSpaceFight(mode) {
       enemies.push({ x: Math.random() * MAP_SIZE, y: Math.random() * MAP_SIZE, type: "boss", hp: 200 + wave * 50, angle: 0, shootCooldown: Math.random() * 100 });
   }
 
-  function shootPlayer() {
-    if (gameOver || !canShoot) return;
-    player.bullets.push({ x: player.x, y: player.y, dx: Math.cos(player.angle) * 10, dy: Math.sin(player.angle) * 10, trail: [] });
-    canShoot = false;
+  function initGame() {
+    player = { x: MAP_SIZE / 2, y: MAP_SIZE / 2, w: 48, h: 48, speed: 4, hp: 100, maxHp: 100, bullets: [], angle: 0 };
+    enemies = []; bulletsEnemy = []; wave = 1; score = 0;
+    camera = { x: 0, y: 0 }; gameOver = false; startTime = Date.now(); stopTime = 0;
+    dashFrames = 0; dashCooldown = 0;
+    initBackground(); spawnEnemies();
+  }
+
+  function shootPlayer(angleOverride) {
+    if (gameOver) return;
+    const angle = angleOverride ?? player.angle;
+    player.bullets.push({ x: player.x, y: player.y, dx: Math.cos(angle) * 10, dy: Math.sin(angle) * 10, trail: [] });
   }
 
   function startDash() {
@@ -128,10 +124,10 @@ function startSpaceFight(mode) {
 
   function updatePlayer() {
     let dx = 0, dy = 0;
-    if (keys["w"] || keys["arrowup"]) dy -= 1;
-    if (keys["s"] || keys["arrowdown"]) dy += 1;
-    if (keys["a"] || keys["arrowleft"]) dx -= 1;
-    if (keys["d"] || keys["arrowright"]) dx += 1;
+    if (keys["w"]) dy -= 1;
+    if (keys["s"]) dy += 1;
+    if (keys["a"]) dx -= 1;
+    if (keys["d"]) dx += 1;
 
     if (dashFrames > 0) {
       player.x += Math.cos(player.angle) * DASH_SPEED;
@@ -146,8 +142,10 @@ function startSpaceFight(mode) {
     player.x = Math.max(0, Math.min(MAP_SIZE, player.x));
     player.y = Math.max(0, Math.min(MAP_SIZE, player.y));
 
-    const targetAngle = Math.atan2(mouse.y - HEIGHT / 2, mouse.x - WIDTH / 2);
-    player.angle += (targetAngle - player.angle) * 0.2;
+    if (mode !== "mobile") {
+      const targetAngle = Math.atan2(mouse.y - HEIGHT / 2, mouse.x - WIDTH / 2);
+      player.angle += (targetAngle - player.angle) * 0.2;
+    }
 
     if (dashCooldown > 0) dashCooldown--;
   }
@@ -157,16 +155,13 @@ function startSpaceFight(mode) {
       const dx = player.x - e.x;
       const dy = player.y - e.y;
       const targetAngle = Math.atan2(dy, dx);
-
       let delta = targetAngle - e.angle;
       delta = Math.atan2(Math.sin(delta), Math.cos(delta));
       e.angle += delta * 0.1;
-
       if (Math.hypot(dx, dy) > 50) {
         e.x += Math.cos(e.angle) * 1.5;
         e.y += Math.sin(e.angle) * 1.5;
       }
-
       e.shootCooldown--;
       if (e.shootCooldown <= 0) {
         e.shootCooldown = 60 + Math.random() * 60;
@@ -178,7 +173,6 @@ function startSpaceFight(mode) {
           case "boss": for (let i = 0; i < 5; i++) { const ang = e.angle + i * 0.4 - 0.8; bulletsEnemy.push({ x: e.x, y: e.y, dx: Math.cos(ang) * 6, dy: Math.sin(ang) * 6, trail: [] }); } break;
         }
       }
-
       if (Math.hypot(e.x - player.x, e.y - player.y) < 32) {
         player.hp -= (e.type === "boss" ? 20 : 10);
         e.x -= Math.cos(e.angle) * 10;
@@ -200,6 +194,7 @@ function startSpaceFight(mode) {
     });
   }
 
+  // --- Drawing Functions ---
   function drawRotatedImage(img, x, y, angle, w, h) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.drawImage(img, -w / 2, -h / 2, w, h); ctx.restore();
   }
@@ -246,12 +241,6 @@ function startSpaceFight(mode) {
     }
   }
 
-  function drawDashUI() {
-    const size = 64; const x = WIDTH / 2 - size / 2; const y = HEIGHT - 100;
-    ctx.globalAlpha = 0.6; ctx.drawImage(dashIcon, x, y, size, size); ctx.globalAlpha = 1;
-    if (dashCooldown > 0) { ctx.fillStyle = "rgba(0,0,0,0.6)"; const height = (dashCooldown / DASH_COOLDOWN_MAX) * size; ctx.fillRect(x, y + size - height, size, height); }
-  }
-
   function loop() {
     WIDTH = canvas.width; HEIGHT = canvas.height;
     if (!gameOver) {
@@ -265,86 +254,18 @@ function startSpaceFight(mode) {
         const img = e.type === "boss" ? images.boss : images["enemy" + e.type];
         drawRotatedImage(img, e.x - camera.x, e.y - camera.y, e.angle + ENEMY_OFFSET, 48, 48);
       });
-
-      drawBullets(); drawUI(); drawDashUI();
+      drawBullets(); drawUI();
       if (player.hp <= 0) { gameOver = true; stopTime = Date.now(); canvas.addEventListener("click", () => { initGame(); }, { once: true }); }
     } else { drawUI(); }
     requestAnimationFrame(loop);
   }
 
-  // Input PC
+  // --- PC Input ---
   if (mode !== "mobile") {
     document.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; if (e.key === " ") startDash(); });
     document.addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; canShoot = true; });
     document.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
-    document.addEventListener("mousedown", shootPlayer);
-  }
-
-  // Input Mobile
-  if (mode === "mobile") {
-    const btnDash = document.getElementById("btnDash");
-    const joystick = document.querySelector(".joystick");
-    const stick = document.getElementById("stick");
-
-    let center = { x: 0, y: 0 };
-    let moving = false;
-    let shootingAngle = null;
-
-    // Dash
-    if (btnDash) {
-      btnDash.addEventListener("touchstart", e => { e.preventDefault(); startDash(); });
-      btnDash.addEventListener("mousedown", startDash);
-    }
-
-    if (joystick && stick) {
-      joystick.addEventListener("touchstart", e => {
-        e.preventDefault();
-        const rect = joystick.getBoundingClientRect();
-        const touch = e.touches[0];
-        center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-        moving = true;
-      });
-
-      joystick.addEventListener("touchmove", e => {
-        if (!moving) return;
-        e.preventDefault();
-        const touch = e.touches[0];
-        const dx = touch.clientX - center.x;
-        const dy = touch.clientY - center.y;
-        const distance = Math.min(Math.sqrt(dx * dx + dy * dy), 40);
-        const angle = Math.atan2(dy, dx);
-        stick.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
-
-        keys["w"] = dy < -10;
-        keys["s"] = dy > 10;
-        keys["a"] = dx < -10;
-        keys["d"] = dx > 10;
-
-        shootingAngle = angle;
-      });
-
-      joystick.addEventListener("touchend", () => {
-        moving = false;
-        stick.style.transform = "translate(0,0)";
-        keys["w"] = keys["a"] = keys["s"] = keys["d"] = false;
-        shootingAngle = null;
-      });
-    }
-
-    // ยิงอัตโนมัติ Mobile
-    const originalLoop = loop;
-    loop = function() {
-      if (shootingAngle) {
-        player.bullets.push({
-          x: player.x,
-          y: player.y,
-          dx: Math.cos(shootingAngle) * 10,
-          dy: Math.sin(shootingAngle) * 10,
-          trail: []
-        });
-      }
-      originalLoop();
-    };
+    document.addEventListener("mousedown", () => { shootPlayer(); canShoot = true; });
   }
 
   window.addEventListener("resize", () => { WIDTH = window.innerWidth; HEIGHT = window.innerHeight; canvas.width = WIDTH; canvas.height = HEIGHT; });
